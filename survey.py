@@ -101,14 +101,11 @@ def calcseps(psrpop):
 		print("Separations to item %4d of %4d" % (i, pcoord.size), end='\r')
 		# Create a skycoord list that is rotated step by step
 		rotated = SkyCoord(roll(popgl,i), roll(popgb,i), frame='galactic', unit='deg')
-		# Append list of astropy Quantities
+		# Append list of separations as astropy Quantities
 		angseps.append(ndarray.tolist(pcoord.separation(rotated)/u.degree))
 		# Concatenate into one long list before returning
+	print("")
 	return(concatenate(angseps))
-
-
-# def plotxy(pop, name, color)
-# def plotlb(pop, name, color)
 
 
 def Hammer(GLdeg,GBdeg):
@@ -121,62 +118,59 @@ def Hammer(GLdeg,GBdeg):
 	return(xHammer,yHammer)
 
 
+def plotxy(pop_detected, pop_all='', name='Survey', color='orange'):
+	# Assumes figure is set up and axes are available
+	if(pop_all!=''):
+		plot(pop_all[:,10], pop_all[:,11], 'b,')
+	plot(pop_detected[:,10], pop_detected[:,11],
+		color=color, marker='*', linestyle='', label=name)
+	xlabel('X (kpc)')
+	ylabel('Y (kpc)')
+	legend()
+	return(0)
+
+def plotlb(pop_detected, pop_all='', name='Survey', color='orange'):
+	# Assumes figure is set up and axes are available
+	if(pop_all!=''):
+		px,py = Hammer(pop_all[:,4], pop_all[:,5])
+		plot(px, py, 'b,')
+	pdx,pdy = Hammer(pop_detected[:,4], pop_detected[:,5])
+	plot(pdx, pdy, color=color, marker='*', linestyle='', label=name)
+	xlabel('Gal_l (deg)')
+	ylabel('Gal_b (deg)')
+	legend()
+	return(0)
+
+def plotangsep(angseps, name='Survey separations', color='#b5323a'):
+	hist(angseps, bins=45, label=name, color=color, rwidth=0.9)
+	legend()
+	xlabel("Angle (degrees)")
+	ylabel("Counts")
+	return(0)
+
+
 def main():
 	# Read in the entire population
-	# pop = loadtxt('dsa2k_pop.asc')
-	pop = loadtxt('test_pop.asc')
+	pop = loadtxt('dsa2k_pop.asc')
+	# pop = loadtxt('test_pop.asc')
 
 	# Define the survey
 	surveypars = defsurvey('AO')
-
 	# Filter by survey parameters
-	detected = dosurvey(pop, surveypars)
+	aopop = dosurvey(pop, surveypars)	# 433 detected
+	aoseps = calcseps(aopop)
 
-	# Make some plots
-	px,py = Hammer(pop[:,4], pop[:,5])
-	pdx,pdy = Hammer(detected[:,4], detected[:,5])
+	#surveypars = defsurvey('GB')
+	#gbpop = dosurvey(pop, surveypars)	# 315 detected
+	#gbseps = calcseps(gbpop)
 
-#if __name__ == '__main__':
-#    main()
+	#surveypars = defsurvey('DSA')
+	#dsapop = dosurvey(pop, surveypars)  # 1904 detected
+	#dsaseps = calcseps(dsapop)
+
+	return(0)
 
 
-
-# Code below is for pasting into ipython
-
-pop = loadtxt('dsa2k_pop.asc')
-surveypars = defsurvey('AO')
-aopop = dosurvey(pop, surveypars)	# 433 detected
-
-surveypars = defsurvey('GB')
-gbpop = dosurvey(pop, surveypars)	# 315 detected
-
-surveypars = defsurvey('DSA')
-dsapop = dosurvey(pop, surveypars)  # 1904 detected
-
-detected = aopop
-angseps = calcseps(detected)
-
-# F1
-px,py = Hammer(pop[:,4], pop[:,5])
-pdx,pdy = Hammer(detected[:,4], detected[:,5])
-plot(px,py, 'b,')
-plot(pdx,pdy, color='orange', marker='*', linestyle='', label='AO pulsars')
-xlabel("Gal_l")
-ylabel('Gal_b')
-legend()
-
-# F2
-plot(pop[:,10], pop[:,11], 'b,')
-# plot(detected[:,10], detected[:,11], 'g+', label='GB pulsars')
-plot(detected[:,10], detected[:,11],
-	color='orange', marker='*', linestyle='', label='AO pulsars')
-xlabel('X (kpc)')
-ylabel('Y (kpc)')
-legend()
-
-# F3
-hist(angseps, bins=45, label="GB separations")
-legend()
-xlabel("Angle (degrees)")
-ylabel("Counts")
+if __name__ == '__main__':
+    main()
 
