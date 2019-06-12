@@ -2,10 +2,10 @@
 # Survey a synthetic population - SC 20190131
 
 """
-  Population synthesis by Tyler Cohen + Paul Demorest 20190129
-  Pop.shape is (37233 rows, 13 cols)
-  Cols are {P Pdot DM W_ms GL GB S1400 L1400 SPINDEX Dist X Y Z}
-  Col IDs  {0 1    2  3    4  5  6     7     8       9   10 11 12}
+  Population synthesis by Tyler Cohen + Paul Demorest 20190612
+  Pop.shape is (37233 rows, 16 cols)
+  Cols are {P Pdot DM t_scatt W_ms GL GB S1400 L1400 SPIDX Dist X Y Z sigtoa3 sigtoa10}
+  Col IDs  {0 1    2  3       4    5  6  7     8     9     10 11 12 13 14     15}
   Note: X**2 + (Y-8.5)**2 + Z**2 = Dist**2
   Note: S1400 = L1400/Dist**2 ; in mJy
   Note: GL, GB are in degrees. GL=(-180,180) GB=(-90,90)
@@ -16,6 +16,13 @@ from numpy import *
 from matplotlib.pylab import *
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+
+kGL = 5
+kGB = 6
+kS1400 = 7
+kX = 11
+kY = 12
+
 
 def defsurvey(tel):
 	# Survey parameters for notional GB, AO, DSA surveys
@@ -51,8 +58,8 @@ def dosurvey(pop, surveypars):
 	# Use surveypars to select from synthetic population
 	print("Selecting for survey %s" % (surveypars['Name']))
 
-	popgl = pop[:,4]
-	popgb = pop[:,5]
+	popgl = pop[:,kGL]
+	popgb = pop[:,kGB]
 	popcoord = SkyCoord(popgl, popgb, frame='galactic', unit='deg')
 
 	declim1 = surveypars['Dec1']*u.degree
@@ -64,7 +71,7 @@ def dosurvey(pop, surveypars):
 	in_sky = pop[is_in_sky]
 	print("%d pulsars in Dec range" % len(in_sky))
 
-	sky_flux = in_sky[:,6]
+	sky_flux = in_sky[:,kS1400]
 	bright = where(sky_flux > surveypars['Smin'])
 	detected = in_sky[bright]
 	print("%d pulsars detected" % len(detected))
@@ -74,8 +81,8 @@ def dosurvey(pop, surveypars):
 
 def calcseps_crude(psrpop):
 	# What are the sampled angular separations?
-	popgl = psrpop[:,4]
-	popgb = psrpop[:,5]
+	popgl = psrpop[:,kGL]
+	popgb = psrpop[:,kGB]
 	pcoord = SkyCoord(popgl, popgb, frame='galactic', unit='deg')
 
 	# astropy.Separation for vectors is calculated on a per-element basis.
@@ -91,8 +98,8 @@ def calcseps_crude(psrpop):
 
 def calcseps(psrpop):
 	# What are the sampled angular separations?
-	popgl = psrpop[:,4]
-	popgb = psrpop[:,5]
+	popgl = psrpop[:,kGL]
+	popgb = psrpop[:,kGB]
 	pcoord = SkyCoord(popgl, popgb, frame='galactic', unit='deg')
 
 	# astropy.Separation for vectors is calculated on a per-element basis.
@@ -121,8 +128,8 @@ def Hammer(GLdeg,GBdeg):
 def plotxy(pop_detected, pop_all='', name='Survey', color='orange'):
 	# Assumes figure is set up and axes are available
 	if(pop_all!=''):
-		plot(pop_all[:,10], pop_all[:,11], 'b,')
-	plot(pop_detected[:,10], pop_detected[:,11],
+		plot(pop_all[:,kX], pop_all[:,kY], 'b,')
+	plot(pop_detected[:,kX], pop_detected[:,kY],
 		color=color, marker='*', linestyle='', label=name)
 	xlabel('X (kpc)')
 	ylabel('Y (kpc)')
@@ -132,9 +139,9 @@ def plotxy(pop_detected, pop_all='', name='Survey', color='orange'):
 def plotlb(pop_detected, pop_all='', name='Survey', color='orange'):
 	# Assumes figure is set up and axes are available
 	if(pop_all!=''):
-		px,py = Hammer(pop_all[:,4], pop_all[:,5])
+		px,py = Hammer(pop_all[:,kGL], pop_all[:,kGB])
 		plot(px, py, 'b,')
-	pdx,pdy = Hammer(pop_detected[:,4], pop_detected[:,5])
+	pdx,pdy = Hammer(pop_detected[:,kGL], pop_detected[:,kGB])
 	plot(pdx, pdy, color=color, marker='*', linestyle='', label=name)
 	xlabel('Gal_l (deg)')
 	ylabel('Gal_b (deg)')
@@ -151,7 +158,7 @@ def plotangsep(angseps, name='Survey separations', color='#b5323a'):
 
 def main():
 	# Read in the entire population
-	pop = loadtxt('dsa2k_pop.asc')
+	pop = loadtxt('dsa2kpop_sigtoa.asc')
 	# pop = loadtxt('test_pop.asc')
 
 	# Define the survey
