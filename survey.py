@@ -2,13 +2,19 @@
 # Survey a synthetic population - SC 20190131
 
 """
-  Population synthesis by Tyler Cohen + Paul Demorest 20190612
+  dsa2kpop_sigtoa.asc:  Population synthesis by Tyler Cohen + Paul Demorest 20190612
+
   Pop.shape is (37233 rows, 16 cols)
   Cols are {P Pdot DM t_scatt W_ms GL GB S1400 L1400 SPIDX Dist X Y Z sigtoa3 sigtoa10}
   Col IDs  {0 1    2  3       4    5  6  7     8     9     10 11 12 13 14     15}
-  Note: X**2 + (Y-8.5)**2 + Z**2 = Dist**2
-  Note: S1400 = L1400/Dist**2 ; in mJy
-  Note: GL, GB are in degrees. GL=(-180,180) GB=(-90,90)
+
+  # P in ms
+  # X**2 + (Y-8.5)**2 + Z**2 = Dist**2
+  # S1400 = L1400/Dist**2 ; in mJy
+  # GL, GB are in degrees. GL=(-180,180) GB=(-90,90)
+
+  test_pop.asc:    1% random sample of das2kpop for tests
+  NG12p5_pop.asc:  NANOGrav 12.5yr pulsars in same format, Michael Lam 20190615
 """
 
 import sys
@@ -17,12 +23,17 @@ from matplotlib.pylab import *
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
+# column IDs
 kGL = 5
 kGB = 6
 kS1400 = 7
 kX = 11
 kY = 12
 
+# filenames
+fsimpop = 'dsa2kpop_sigtoa.asc'
+ftestpop = 'test_pop.asc'
+fnanopop = 'NG12p5_pop.asc'
 
 def defsurvey(tel):
 	# Survey parameters for notional GB, AO, DSA surveys
@@ -89,11 +100,12 @@ def calcseps_crude(psrpop):
 	# Just brute-force iterate?
 	angseps = []
 	for i in range(pcoord.size):
-		print("Separations to item %4d of %4d" % (i, pcoord.size), end='\r')
+		print("Separations to item %4d of %4d" % (i+1, pcoord.size), end='\r')
 		for j in range(i):
 			angseps.append(float(pcoord[i].separation(pcoord[j])/u.degree))
 
-	return(angseps)
+	print("Proper count; use weight=1.0 (non-default) in plotangsep")
+	return(array(angseps))
 
 
 def calcseps(psrpop):
@@ -105,13 +117,13 @@ def calcseps(psrpop):
 	# astropy.Separation for vectors is calculated on a per-element basis.
 	angseps = []
 	for i in range(1,pcoord.size):
-		print("Separations to item %4d of %4d" % (i, pcoord.size), end='\r')
+		print("Separations to item %4d of %4d" % (i+1, pcoord.size), end='\r')
 		# Create a skycoord list that is rotated step by step
 		rotated = SkyCoord(roll(popgl,i), roll(popgb,i), frame='galactic', unit='deg')
 		# Append list of separations as astropy Quantities
 		angseps.append(ndarray.tolist(pcoord.separation(rotated)/u.degree))
 		# Concatenate into one long list before returning
-	print("")
+	print("Double counted! Use weight = 0.5 (default) in plotangsep")
 	return(concatenate(angseps))
 
 
@@ -148,8 +160,9 @@ def plotlb(pop_detected, pop_all='', name='Survey', color='orange'):
 	legend()
 	return(0)
 
-def plotangsep(angseps, name='Survey separations', color='#b5323a'):
-	hist(angseps, bins=45, label=name, color=color, rwidth=0.9)
+def plotangsep(angseps, name='Survey separations', color='#b5323a', weight=0.5):
+	weights = ones(angseps.size)*weight
+	hist(angseps, bins=45, label=name, color=color, rwidth=0.9, weights=weights)
 	legend()
 	xlabel("Angle (degrees)")
 	ylabel("Counts")
@@ -157,26 +170,20 @@ def plotangsep(angseps, name='Survey separations', color='#b5323a'):
 
 
 def main():
-	# Read in the entire population
-	pop = loadtxt('dsa2kpop_sigtoa.asc')
-	# pop = loadtxt('test_pop.asc')
 
-	# Define the survey
+	print('''
+	# Read in the population [ fsimpop | ftestpop | fnanopop ]
+	pop = loadtxt(fnanopop)
+
+	# Define the survey [ AO | GB | DSA ]
 	surveypars = defsurvey('AO')
+
 	# Filter by survey parameters
-	aopop = dosurvey(pop, surveypars)	# 433 detected
-	aoseps = calcseps(aopop)
-
-	#surveypars = defsurvey('GB')
-	#gbpop = dosurvey(pop, surveypars)	# 315 detected
-	#gbseps = calcseps(gbpop)
-
-	#surveypars = defsurvey('DSA')
-	#dsapop = dosurvey(pop, surveypars)  # 1904 detected
-	#dsaseps = calcseps(dsapop)
+	foundpop = dosurvey(pop, surveypars)	# 433 detected
+	seps = calcseps(foundpop)
+	''')
 
 	return(0)
-
 
 if __name__ == '__main__':
     main()
