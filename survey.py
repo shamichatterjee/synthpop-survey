@@ -22,6 +22,7 @@ from numpy import *
 from matplotlib.pylab import *
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from matplotlib import gridspec
 
 # column IDs
 kGL = 5
@@ -162,12 +163,55 @@ def plotlb(pop_detected, pop_all='', name='Survey', color='orange'):
 
 def plotangsep(angseps, name='Survey separations', color='#b5323a', weight=0.5):
 	weights = ones(angseps.size)*weight
-	hist(angseps, bins=45, label=name, color=color, rwidth=0.9, weights=weights)
+	hist(angseps, bins=45, label=name, color=color, rwidth=0.9, weights=weights, log=True)
 	legend()
 	xlabel("Angle (degrees)")
 	ylabel("Counts")
 	return(0)
 
+def genHDcurve(thetadeg):
+	# Return an array with HD curve for 0...180 degrees
+	# x = (1-cos theta)/2
+	# HD = 3/2 x ln x - x/4 + 1/2 + 1/2 delta(x)
+	theta = thetadeg*math.pi/180.0
+	x = (1 - cos(theta))/2.0
+	HD = 1.5*x*log(x) - 0.25*x + 0.5
+	return(HD)
+
+
+def makeA2020plot():
+	theta = linspace(0.0001, 180.000, 900)
+	hd = genHDcurve(theta)
+
+	pngao = loadtxt('NGAO.asc')
+	pnggb = loadtxt('NGGB.asc')
+	pnano = loadtxt(fnanopop)
+	psynth = loadtxt('dummy200.txt')
+
+	s4 = calcseps(psynth)
+	s3 = calcseps(pnano)
+	s2 = calcseps(pngao)
+	s1 = calcseps(pnggb)
+
+	gs = gridspec.GridSpec(2,1, height_ratios=[1,3])
+
+	ax2 = subplot(gs[1])
+	plotangsep(s4, name='200 pulsars (synthetic)', color='#0B486B')
+	plotangsep(s3, name='NANOGrav 12.5 yr', color='#3B8686')
+	plotangsep(s2, name='NANOGrav Arecibo-only', color='#79BD9A')
+	plotangsep(s1, name='NANOGrav GBT-only', color='#CFF09E')
+	#ax2.set_xticklabels(arange(15,190,15))
+
+	ax1 = subplot(gs[0], sharex=ax2)
+	ax1.plot(theta, hd, ls='-', color='#0B486B', label='Hellings-Downs correlation')
+	ax1.legend()
+	ax1.plot(theta, zeros(theta.size), ls='--', color='#b5323a')
+	ax1.set_ylabel('Correlation')
+	# ax1.set_xticklabels('')
+	ax1.tick_params(axis='x', labelbottom=False)
+
+	subplots_adjust(hspace=.0)
+	subplots_adjust(top=0.95, bottom=0.1, left=0.11, right=0.95)
 
 def main():
 
@@ -180,7 +224,10 @@ def main():
 
 	# Filter by survey parameters
 	foundpop = dosurvey(pop, surveypars)	# 433 detected
+
+	# Calculate and plot separations
 	seps = calcseps(foundpop)
+	plotangsep(seps)
 	''')
 
 	return(0)
