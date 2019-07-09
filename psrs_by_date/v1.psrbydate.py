@@ -20,17 +20,11 @@ psrdates = loadtxt('starts.txt', usecols=(2,))
 lastdate = int(sorted(psrdates)[-1])+2
 
 known = 25 # 25 known pulsars, not being timed
-# knowndates = concatenate((psrdates, 2020.0*ones(known)))
-# Instead, ramp up the 25 over 2020-2025
-rampknown = arange(2020.0, 2025.0, (2025.0-2020.0)/known)
-knowndates = concatenate((psrdates, rampknown))
+knowndates = concatenate((psrdates, 2020.0*ones(known)))
 
 numpsr = len(psrdates) + known
 addnum = 200 - numpsr  # Want to get to 200 pulsars by 2030, have numpsr already
-# Random survey discoveries
-# newdates = (2026.0 - lastdate)*random_sample(addnum) + lastdate
-# Instead, discoveries all start getting timed in 2025 by DSA-2000
-newdates = 2025*ones(addnum)
+newdates = (2026.0 - lastdate)*random_sample(addnum) + lastdate
 
 alldates = concatenate((knowndates, newdates))
 
@@ -56,9 +50,8 @@ ax.hist(alldates, bins=bins, cumulative=True, histtype='step', color=col4, label
 ax.hist(knowndates, bins=bins, cumulative=True, histtype='step', color=col2, label='Already known')
 ax.hist(psrdates, bins=bins, cumulative=True, histtype='step', color=col1, label='Currently timed')
 
-ax.set_xlabel('Year', fontsize=20)
-ax.set_ylabel('Number of MSPs timed', fontsize=20)
-ax.set_title('Projected growth of the NANOGrav PTA', fontsize=20)
+ax.set_xlabel('Year')
+ax.set_ylabel('Number of MSPs timed + known + future')
 # ax.legend(loc=2)
 
 datarelease(ax, 2010, 17, r'5 yr')
@@ -71,8 +64,7 @@ ax.text(2019, 180, 'NANOGrav Data Releases', ha='right', va='bottom', bbox=dict(
 
 ax.text(2033, 25, r'{\Large Timed by NANOGrav}', ha='right', bbox=dict(facecolor='white', alpha=0.7, ec='None'))
 ax.text(2033, len(psrdates)+known/2.0, r'{\large Already known}', ha='right', va='center', bbox=dict(facecolor='white', alpha=0.7, ec='None'))
-#ax.text(2033, numpsr+25, r'{\large Future surveys}', ha='right', bbox=dict(facecolor='white', alpha=0.7, ec='None'))
-ax.text(2033, numpsr+25, r'{\large New \\ discoveries \\timed with \\DSA-2000}', ha='right', bbox=dict(facecolor='white', alpha=0.7, ec='None'))
+ax.text(2033, numpsr+25, r'{\large Future surveys}', ha='right', bbox=dict(facecolor='white', alpha=0.7, ec='None'))
 
 
 # savefig('obsbydate.pdf')
