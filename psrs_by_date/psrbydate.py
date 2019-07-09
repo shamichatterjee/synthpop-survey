@@ -21,16 +21,16 @@ lastdate = int(sorted(psrdates)[-1])+2
 
 known = 25 # 25 known pulsars, not being timed
 # knowndates = concatenate((psrdates, 2020.0*ones(known)))
-# Instead, ramp up the 25 over 2020-2025
-rampknown = arange(2020.0, 2025.0, (2025.0-2020.0)/known)
+# Instead, ramp up the 25 over 2020-2026
+rampknown = arange(2020.0, 2026.0, (2026.0-2020.0)/known)
 knowndates = concatenate((psrdates, rampknown))
 
 numpsr = len(psrdates) + known
 addnum = 200 - numpsr  # Want to get to 200 pulsars by 2030, have numpsr already
 # Random survey discoveries
 # newdates = (2026.0 - lastdate)*random_sample(addnum) + lastdate
-# Instead, discoveries all start getting timed in 2025 by DSA-2000
-newdates = 2025*ones(addnum)
+# Instead, discoveries all start getting timed in 2026 by DSA-2000
+newdates = 2026*ones(addnum)
 
 alldates = concatenate((knowndates, newdates))
 
