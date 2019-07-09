@@ -24,6 +24,27 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from matplotlib import gridspec
 
+matplotlib.pylab.rcParams['text.usetex'] = True
+matplotlib.pylab.rcParams['font.family'] = 'serif'
+
+# Change 10^0 and 10^1 axis labels, via MTL 20190709
+from matplotlib.ticker import FuncFormatter
+
+def nolog(x,pos):
+    y = np.log10(x)
+    if y == 1:
+        return "$\hfill 10$"
+    elif y == 0:
+        return "$\hfill 1$"
+    elif y == -1:
+        return "$\hfill 0.1$"
+    elif y == -2:
+        return "$\hfill 0.01$"
+    return "$\hfill 10^{%i}$" % np.log10(x)
+
+myformatter = FuncFormatter(nolog)
+
+
 # column IDs
 kGL = 5
 kGB = 6
@@ -165,8 +186,8 @@ def plotangsep(angseps, name='Survey separations', color='#b5323a', weight=0.5):
 	weights = ones(angseps.size)*weight
 	hist(angseps, bins=45, label=name, color=color, rwidth=0.9, weights=weights, log=True)
 	legend()
-	xlabel("Angle (degrees)")
-	ylabel("Counts")
+	#xlabel("Angle (degrees)")
+	#ylabel("Counts")
 	return(0)
 
 def genHDcurve(thetadeg):
@@ -200,18 +221,23 @@ def makeA2020plot():
 	plotangsep(s3, name='NANOGrav 12.5 yr', color='#3B8686')
 	plotangsep(s2, name='NANOGrav Arecibo-only', color='#79BD9A')
 	plotangsep(s1, name='NANOGrav GBT-only', color='#CFF09E')
+
 	#ax2.set_xticklabels(arange(15,190,15))
+	ax2.yaxis.set_major_formatter(myformatter)
+	ax2.set_ylabel('Counts', fontsize=16)
+	ax2.set_xlabel("Angle (degrees)", fontsize=16)
 
 	ax1 = subplot(gs[0], sharex=ax2)
 	ax1.plot(theta, hd, ls='-', color='#0B486B', label='Hellings-Downs correlation')
-	ax1.legend()
+	ax1.legend(fontsize=14)
 	ax1.plot(theta, zeros(theta.size), ls='--', color='#b5323a')
-	ax1.set_ylabel('Correlation')
+	ax1.set_ylabel('Correlation', fontsize=16)
 	# ax1.set_xticklabels('')
 	ax1.tick_params(axis='x', labelbottom=False)
 
 	subplots_adjust(hspace=.0)
-	subplots_adjust(top=0.95, bottom=0.1, left=0.11, right=0.95)
+	subplots_adjust(top=0.95, bottom=0.11, left=0.11, right=0.95)
+
 
 def main():
 
